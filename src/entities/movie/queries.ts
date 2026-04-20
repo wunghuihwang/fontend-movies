@@ -88,6 +88,7 @@ export const useAddReview = (movieId: number) => {
         },
         onSettled: () => {
             qc.invalidateQueries({ queryKey: ['reviews', movieId] })
+            qc.invalidateQueries({ queryKey: ['myReviews', movieId] })
         },
     })
 }
@@ -116,6 +117,7 @@ export const useDeleteReview = (movieId: number) => {
 
         onSettled: () => {
             qc.invalidateQueries({ queryKey: ['reviews', movieId] })
+            qc.invalidateQueries({ queryKey: ['myReviews', movieId] })
         },
     })
 }
@@ -137,6 +139,7 @@ export const useSetRating = () => {
 
         onSuccess: (_, vars) => {
             qc.invalidateQueries({ queryKey: ['myRating', vars.movieId] })
+            qc.invalidateQueries({ queryKey: ['myRatings', vars.userId] })
         },
     })
 }
@@ -184,6 +187,7 @@ export const useToggleFavorite = () => {
     
         onSettled: (_, __, vars) => {
             qc.invalidateQueries({ queryKey: ['favorite', vars.movieId] })
+            qc.invalidateQueries({ queryKey: ['myFavorites', vars.userId] })
         },
     })
 }
@@ -215,7 +219,7 @@ export const useMyAllReviews = (userId: string | undefined) => {
 
 export const useMyAllRatings = (userId: string | undefined) => {
     return useQuery({
-        queryKey: ['myReviews', userId],
+        queryKey: ['myRating', userId],
         queryFn: () => getMyAllRatings(userId!),
         enabled: !!userId,
     })
