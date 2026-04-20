@@ -99,3 +99,24 @@ export const getReviews = async (movieId: number) => {
         ...doc.data(),
     }))
 }
+
+// 내가 좋아요 한 영화 ID 목록 가져오기
+export const getMyAllFavorites = async (userId: string) => {
+    const q = query(collection(db, 'favorites'), where('userId', '==', userId));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => doc.data().movieId);
+}
+
+// 내가 쓴 모든 리뷰 가져오기
+export const getMyAllReviews = async (userId: string) => {
+    const q = query(collection(db, 'reviews'), where('userId', '==', userId));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// 내가 준 모든 평점 가져오기
+export const getMyAllRatings = async (userId: string) => {
+    const q = query(collection(db, 'ratings'), where('userId', '==', userId));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => doc.data());
+}

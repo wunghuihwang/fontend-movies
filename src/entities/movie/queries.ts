@@ -9,6 +9,9 @@ import {
     addReview,
     deleteReview,
     getFavorite,
+    getMyAllFavorites,
+    getMyAllRatings,
+    getMyAllReviews,
     getMyRating,
     getReviews,
     setRating,
@@ -190,6 +193,30 @@ export const useFavorite = (userId: string | undefined, movieId: number) => {
     return useQuery({
         queryKey: ['favorite', movieId],
         queryFn: () => getFavorite(userId!, movieId),
+        enabled: !!userId,
+    })
+}
+
+export const useMyAllFavorites = (userId: string | undefined) => {
+    return useQuery({
+        queryKey: ['myFavorites', userId],
+        queryFn: () => getMyAllFavorites(userId!),
+        enabled: !!userId,
+    })
+}
+
+export const useMyAllReviews = (userId: string | undefined) => {
+    return useQuery({
+        queryKey: ['myReviews', userId],
+        queryFn: () => getMyAllReviews(userId!),
+        enabled: !!userId,
+    })
+}
+
+export const useMyAllRatings = (userId: string | undefined) => {
+    return useQuery({
+        queryKey: ['myReviews', userId],
+        queryFn: () => getMyAllRatings(userId!),
         enabled: !!userId,
     })
 }
