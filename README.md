@@ -43,3 +43,59 @@ src/
  ├─ features/
  ├─ shared/
  ├─ store/
+```
+- 기능 단위 구분(auth, review, rating 같은 것들)
+- 공통 shared 분리
+
+---
+
+### 구현하면서 신경 쓴 부분
+
+## 1. 상태 분리
+
+서버 데이터는 React Query로 관리하고
+UI 상태는 Zustand로 따로 분리했습니다.
+
+처음에는 섞어서 쓰다가 구조가 너무 복잡해져서 나눴습니다.
+
+## 2. API 분리
+
+컴포넌트에서 바로 API 호출 안 하고
+api 파일 따로 만들어서 관리했습니다.
+
+나중에 유지보수할 때 훨씬 편했습니다.
+
+## 3. Firebase 데이터 구조
+- users
+- reviews
+- ratings
+- favorites
+
+이렇게 나눠서 관리했습니다.
+
+특히 평점은 userId + movieId 기준으로 하나만 저장되게 처리했습니다.
+
+## 4. UX
+
+평점이나 좋아요 누르면 바로 반영되게
+낙관적 업데이트 적용했습니다.
+
+---
+
+## 실행방법
+
+```bash
+npm install
+npm run dev
+```
+---
+
+## 환경변수
+
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+
+NEXT_PUBLIC_TMDB_TOKEN=
+```
