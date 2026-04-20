@@ -17,6 +17,7 @@ TMDB API랑 Firebase를 같이 써서 실제 서비스처럼 데이터 흐름을
 
 - Firebase (Auth + Firestore)
 - TMDB API
+- Netlify(배포)
 
 ---
 
