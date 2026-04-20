@@ -1,9 +1,24 @@
 import { tmdb } from '@/shared/api/tmdb'
+import { MovieResponse } from './types'
 
-export const getMovies = async (query: string) => {
-    const res = await tmdb.get('/search/movie', {
-        params: { query },
+// 검색
+export const searchMovies = async (query: string, page = 1) => {
+    const res = await tmdb.get<MovieResponse>('/search/movie', {
+        params: { query, page },
     })
-    
-    return res.data.results
+    return res.data
+}
+
+// 인기 영화
+export const getPopularMovies = async (page = 1) => {
+    const res = await tmdb.get<MovieResponse>('/movie/popular', {
+        params: { page },
+    })
+    return res.data
+}
+
+// 영화 상세
+export const getMovieDetail = async (id: string) => {
+    const res = await tmdb.get(`/movie/${id}`)
+    return res.data
 }
