@@ -1,6 +1,9 @@
+import ProtectedRoute from "@/shared/ui/ProtectedRoute";
 
 export default function Home() {
-  return (
-<div className="text-red-500">test</div>
-  );
+    return (
+        <ProtectedRoute>
+            <div>마이페이지</div>
+        </ProtectedRoute>
+    );
 }
