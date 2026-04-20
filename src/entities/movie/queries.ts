@@ -1,33 +1,44 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+    useInfiniteQuery,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from '@tanstack/react-query'
 import { getMovieDetail, getPopularMovies, searchMovies } from './api'
-import { addReview, deleteReview, getFavorite, getMyRating, getReviews, setRating, toggleFavorite } from './firebase.api'
+import {
+    addReview,
+    deleteReview,
+    getFavorite,
+    getMyRating,
+    getReviews,
+    setRating,
+    toggleFavorite,
+} from './firebase.api'
 
-// 인기 영화
+  // 인기 영화
 export const usePopularMovies = (page: number) => {
     return useQuery({
         queryKey: ['movies', 'popular', page],
         queryFn: () => getPopularMovies(page),
-        staleTime: 1000 * 60 * 5, 
-  })
-}
-
-// 검색 (무한 스크롤)
-export const useSearchMovies = (query: string) => {
-    return useInfiniteQuery({
-        queryKey: ['movies', 'search', query],
-        queryFn: ({ pageParam = 1 }) =>
-            searchMovies(query, pageParam),
-        initialPageParam: 1,
-        getNextPageParam: (lastPage) => {
-            if (lastPage.page < lastPage.total_pages) {
-                return lastPage.page + 1
-            }
-            return undefined
-        },
-        enabled: !!query, 
+        staleTime: 1000 * 60 * 5,
     })
 }
 
+// 검색
+export const useSearchMovies = (query: string) => {
+    return useInfiniteQuery({
+        queryKey: ['movies', 'search', query],
+        queryFn: ({ pageParam = 1 }) => searchMovies(query, pageParam),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) =>
+            lastPage.page < lastPage.total_pages
+            ? lastPage.page + 1
+            : undefined,
+        enabled: !!query,
+    })
+}
+
+  // 상세
 export const useMovieDetail = (id: string) => {
     return useQuery({
         queryKey: ['movie', id],
@@ -46,13 +57,33 @@ export const useReviews = (movieId: number) => {
 
 // 리뷰 작성
 export const useAddReview = (movieId: number) => {
-const qc = useQueryClient()
+    const qc = useQueryClient()
 
     return useMutation({
         mutationFn: (data: { userId: string; content: string }) =>
         addReview(data.userId, movieId, data.content),
 
-        onSuccess: () => {
+        onMutate: async (newReview) => {
+            await qc.cancelQueries({ queryKey: ['reviews', movieId] })
+
+            const prev = qc.getQueryData(['reviews', movieId])
+
+            qc.setQueryData(['reviews', movieId], (old: any[] = []) => [
+                {
+                    id: Date.now(),
+                    content: newReview.content,
+                    userId: newReview.userId,
+                },
+                ...old,
+            ])
+
+            return { prev }
+        },
+
+        onError: (_, __, ctx) => {
+            qc.setQueryData(['reviews', movieId], ctx?.prev)
+        },
+        onSettled: () => {
             qc.invalidateQueries({ queryKey: ['reviews', movieId] })
         },
     })
@@ -64,7 +95,23 @@ export const useDeleteReview = (movieId: number) => {
 
     return useMutation({
         mutationFn: (id: string) => deleteReview(id),
-        onSuccess: () => {
+
+        onMutate: async (id) => {
+            await qc.cancelQueries({ queryKey: ['reviews', movieId] })
+
+            const prev = qc.getQueryData(['reviews', movieId])
+
+            qc.setQueryData(['reviews', movieId], (old: any[] = []) =>
+                old.filter((r) => r.id !== id)
+            )
+
+            return { prev }
+        },
+        onError: (_, __, ctx) => {
+            qc.setQueryData(['reviews', movieId], ctx?.prev)
+        },
+
+        onSettled: () => {
             qc.invalidateQueries({ queryKey: ['reviews', movieId] })
         },
     })
@@ -72,6 +119,8 @@ export const useDeleteReview = (movieId: number) => {
 
 // 평점
 export const useSetRating = () => {
+    const qc = useQueryClient()
+
     return useMutation({
         mutationFn: ({
             userId,
@@ -82,20 +131,26 @@ export const useSetRating = () => {
             movieId: number
             rating: number
         }) => setRating(userId, movieId, rating),
+
+        onSuccess: (_, vars) => {
+            qc.invalidateQueries({ queryKey: ['myRating', vars.movieId] })
+        },
     })
 }
 
 // 내 평점
-export const useMyRating = (userId: string, movieId: number) => {
+export const useMyRating = (userId: string | undefined, movieId: number) => {
     return useQuery({
         queryKey: ['myRating', movieId],
-        queryFn: () => getMyRating(userId, movieId),
+        queryFn: () => getMyRating(userId!, movieId),
         enabled: !!userId,
     })
 }
 
-  // 좋아요
+// 좋아요
 export const useToggleFavorite = () => {
+    const qc = useQueryClient()
+    
     return useMutation({
         mutationFn: ({
             userId,
@@ -106,13 +161,35 @@ export const useToggleFavorite = () => {
             movieId: number
             isLiked: boolean
         }) => toggleFavorite(userId, movieId, isLiked),
+    
+        onMutate: async ({ movieId }) => {
+            await qc.cancelQueries({ queryKey: ['favorite', movieId] })
+    
+            const prev = qc.getQueryData(['favorite', movieId])
+    
+            qc.setQueryData(['favorite', movieId], (old: boolean | undefined) => {
+                
+                return !old
+            })
+    
+            return { prev }
+        },
+    
+        onError: (_, vars, ctx) => {
+            qc.setQueryData(['favorite', vars.movieId], ctx?.prev)
+        },
+    
+        onSettled: (_, __, vars) => {
+            qc.invalidateQueries({ queryKey: ['favorite', vars.movieId] })
+        },
     })
 }
 
-export const useFavorite = (userId: string, movieId: number) => {
+// 좋아요 상태
+export const useFavorite = (userId: string | undefined, movieId: number) => {
     return useQuery({
         queryKey: ['favorite', movieId],
-        queryFn: () => getFavorite(userId, movieId),
+        queryFn: () => getFavorite(userId!, movieId),
         enabled: !!userId,
     })
 }

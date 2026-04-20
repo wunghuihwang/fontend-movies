@@ -12,7 +12,7 @@ import {
     where,
 } from 'firebase/firestore'
 
-// 평점
+// 평점 저장
 export const setRating = async (
     userId: string,
     movieId: number,
@@ -28,14 +28,14 @@ export const setRating = async (
     })
 }
 
-// 내평점
+// 내 평점
 export const getMyRating = async (userId: string, movieId: number) => {
     const ref = doc(db, 'ratings', `${userId}_${movieId}`)
     const snap = await getDoc(ref)
     return snap.exists() ? snap.data() : null
 }
 
-// 리뷰
+// 리뷰 작성
 export const addReview = async (
     userId: string,
     movieId: number,
@@ -49,38 +49,43 @@ export const addReview = async (
     })
 }
 
-// 내 리뷰 삭제
+// 리뷰 삭제
 export const deleteReview = async (id: string) => {
+    console.log(id)
     await deleteDoc(doc(db, 'reviews', id))
 }
 
-// 좋아요
+// 좋아요 토글
 export const toggleFavorite = async (
     userId: string,
     movieId: number,
     isLiked: boolean
 ) => {
+
+    console.log(`${userId}_${movieId}`)
     const ref = doc(db, 'favorites', `${userId}_${movieId}`)
 
     if (isLiked) {
+        console.log('1')
         await deleteDoc(ref)
     } else {
+        console.log('2')
         await setDoc(ref, {
-        userId,
-        movieId,
-        createdAt: serverTimestamp(),
+            userId,
+            movieId,
+            createdAt: serverTimestamp(),
         })
     }
 }
 
-// 내 좋아요 상태
+// 좋아요 상태
 export const getFavorite = async (userId: string, movieId: number) => {
     const ref = doc(db, 'favorites', `${userId}_${movieId}`)
     const snap = await getDoc(ref)
     return snap.exists()
 }
 
-  // 리뷰 목록
+// 리뷰 목록
 export const getReviews = async (movieId: number) => {
     const q = query(
         collection(db, 'reviews'),
@@ -88,7 +93,7 @@ export const getReviews = async (movieId: number) => {
     )
 
     const snap = await getDocs(q)
-    
+
     return snap.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
